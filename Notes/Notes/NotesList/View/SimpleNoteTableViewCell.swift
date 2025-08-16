@@ -13,7 +13,6 @@ final class SimpleNoteTableViewCell: UITableViewCell {
     private let containerView: UIView = {
         let view = UIView()
         
-        view.backgroundColor = .lightPink
         view.layer.cornerRadius = 10
         
         return view
@@ -43,6 +42,7 @@ final class SimpleNoteTableViewCell: UITableViewCell {
     //MARK: - Methods
     func set(note: Note) {
         titleLabel.text = note.title
+        containerView.backgroundColor = note.category.colorCategory
     }
     
     //MARK: - Private Methods

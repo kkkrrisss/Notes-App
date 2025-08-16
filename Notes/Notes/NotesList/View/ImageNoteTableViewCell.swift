@@ -13,7 +13,6 @@ final class ImageNoteTableViewCell: UITableViewCell {
     private let containerView: UIView = {
         let view = UIView()
         
-        view.backgroundColor = .lightBlue
         view.layer.cornerRadius = 10
         
         return view
@@ -54,6 +53,7 @@ final class ImageNoteTableViewCell: UITableViewCell {
     //MARK: - Methods
     func set(note: Note) {
         titleLabel.text = note.title
+        containerView.backgroundColor = note.category.colorCategory
         guard let imageData = note.image,
               let image =  UIImage(data: imageData) else { return }
         attachmentView.image = image

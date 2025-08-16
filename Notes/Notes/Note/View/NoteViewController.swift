@@ -15,10 +15,8 @@ final class NoteViewController: UIViewController {
         let view = UIImageView()
         
         view.layer.cornerRadius = 10
-        view.image = UIImage(named: "mockImage")
         view.layer.masksToBounds = true
         view.contentMode = .scaleAspectFill
-        view.backgroundColor = .white
         
         return view
     }()
@@ -31,10 +29,14 @@ final class NoteViewController: UIViewController {
         return view
     }()
     
+    //MARK: - Properties
+    var viewModel: NoteViewModelProtocol?
+    
     //MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        configure()
         setupUI()
     }
 
@@ -44,17 +46,38 @@ final class NoteViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = false
     }
     
-    //MARK: - Methods
-    func set(note: Note) {
-        textView.text = note.title + " " + note.description
-        guard let imageData = note.image,
-              let image = UIImage(data: imageData) else { return }
-        attachmentView.image = image
+    //MARK: - Action
+    @objc
+    private func saveAction() {
+        viewModel?.save(text: textView.text, category: .lists)
+        navigationController?.popViewController(animated: true)
+    }
+    
+    @objc
+    private func deleteAction() {
+        viewModel?.delete()
+        navigationController?.popViewController(animated: true)
+    }
+    
+    @objc
+    private func addImageAction() {
+        
+    }
+    
+    @objc func addCategoryAction() {
+        
     }
     
     //MARK: - Private Methods
+    private func configure() {
+        textView.text = viewModel?.text
+        view.backgroundColor = viewModel?.noteCategory.colorCategory
+//        guard let imageData = note.image,
+//              let image = UIImage(data: imageData) else { return }
+//        attachmentView.image = image
+    }
+    
     private func setupUI() {
-        view.backgroundColor = .white
         view.addSubview(attachmentView)
         view.addSubview(textView)
         
@@ -101,21 +124,26 @@ final class NoteViewController: UIViewController {
         textView.resignFirstResponder()
     }
     
-    @objc
-    private func saveAction() {
-        
-    }
-    
-    @objc
-    private func deleteAction() {
-        
-    }
+
     
     private func setupBars() {
         let trashButton = UIBarButtonItem(barButtonSystemItem: .trash,
                                           target: self,
                                           action: #selector(deleteAction))
-        setToolbarItems([trashButton], animated: true)
+        
+        let addImage = UIBarButtonItem(title: "Add image",
+                                       image: nil,
+                                       target: self,
+                                       action: #selector(addImageAction))
+        
+        let categoryButton = UIBarButtonItem(title: "Category",
+                                             image: nil,
+                                             target: self,
+                                             action: #selector(addCategoryAction))
+        
+        let spacing = UIBarButtonItem(systemItem: .flexibleSpace)
+        
+        setToolbarItems([trashButton, spacing, addImage, spacing, categoryButton], animated: true)
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save,
                                                             target: self,
