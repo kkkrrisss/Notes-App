@@ -35,19 +35,20 @@ final class NotesListViewModel: NotesListViewModelProtocol {
     func getNotes() {
         let notes = NotePersistent.fetchAll()
         section = []
-        print(notes)
+        //print(notes)
+        let sortedNotes = notes.sorted { $0.date > $1.date }
         
-        let groupedObjects = notes.reduce(into: [Date: [Note]]()) { result, note in
+        let groupedObjects = sortedNotes.reduce(into: [Date: [Note]]()) { result, note in
             let date = Calendar.current.startOfDay(for: note.date)
             result[date, default: []].append(note)
         }
         
-        let keys = groupedObjects.keys
+        let keys = groupedObjects.keys.sorted(by: >)
+        print(keys)
         keys.forEach { key in
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "d MMM yyyy"
             let stringDate = dateFormatter.string(from: key)
-            
             section.append(TableViewSection(title: stringDate,
                                             items: groupedObjects[key] ?? []))
         }

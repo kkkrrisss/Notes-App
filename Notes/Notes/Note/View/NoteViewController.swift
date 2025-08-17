@@ -31,11 +31,23 @@ final class NoteViewController: UIViewController {
     
     //MARK: - Properties
     var viewModel: NoteViewModelProtocol?
+    var isNewNote: Bool = true
+    private var category: Category = .personal {
+        didSet {
+            view.backgroundColor = category.colorCategory
+        }
+    }
     
+    private var hasChanges = false {
+        didSet {
+            navigationItem.rightBarButtonItem?.isEnabled = hasChanges
+        }
+    }
     //MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        textView.delegate = self
         configure()
         setupUI()
     }
@@ -49,7 +61,7 @@ final class NoteViewController: UIViewController {
     //MARK: - Action
     @objc
     private func saveAction() {
-        viewModel?.save(text: textView.text, category: .lists)
+        viewModel?.save(text: textView.text, category: category)
         navigationController?.popViewController(animated: true)
     }
     
@@ -69,9 +81,13 @@ final class NoteViewController: UIViewController {
     }
     
     //MARK: - Private Methods
+    
+    //MARK: Setup and configure
     private func configure() {
         textView.text = viewModel?.text
         view.backgroundColor = viewModel?.noteCategory.colorCategory
+        category = viewModel?.noteCategory ?? .personal
+        
 //        guard let imageData = note.image,
 //              let image = UIImage(data: imageData) else { return }
 //        attachmentView.image = image
@@ -81,6 +97,15 @@ final class NoteViewController: UIViewController {
         view.addSubview(attachmentView)
         view.addSubview(textView)
         
+        //Save Button
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+                barButtonSystemItem: .save,
+                target: self,
+                action: #selector(saveAction)
+            )
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        
+        //Keyboard
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
         view.addGestureRecognizer(recognizer)
         
@@ -118,37 +143,69 @@ final class NoteViewController: UIViewController {
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 10
     }
+
+    private func setupBars() {
+        let addImage = UIBarButtonItem(title: "Add image",
+                                       image: nil,
+                                       target: self,
+                                       action: #selector(addImageAction))
+
+        let categoryButton = UIBarButtonItem(
+            title: viewModel?.noteCategory.getStringCategory,
+                image: nil,
+                primaryAction: nil,
+                menu: createCategoryMenu()
+            )
+
+        let spacing = UIBarButtonItem(systemItem: .flexibleSpace)
+        
+        if isNewNote {
+            setToolbarItems([spacing, spacing, addImage, spacing, categoryButton], animated: true)
+            
+        } else {
+            let trashButton = UIBarButtonItem(barButtonSystemItem: .trash,
+                                              target: self,
+                                              action: #selector(deleteAction))
+            setToolbarItems([trashButton, spacing, addImage, spacing, categoryButton], animated: true)
+        }
+    }
     
+    //MARK: Other
     @objc
     private func hideKeyboard() {
         textView.resignFirstResponder()
     }
     
+    private func createCategoryMenu() -> UIMenu {
+        let actions = Category.allCases.map { category in
+            UIAction(title: category.getStringCategory) { [weak self] _ in
+                self?.handleCategorySelection(category)
+            }
+        }
+        return UIMenu(title: "Select Category for note", children: actions)
+    }
 
-    
-    private func setupBars() {
-        let trashButton = UIBarButtonItem(barButtonSystemItem: .trash,
-                                          target: self,
-                                          action: #selector(deleteAction))
-        
-        let addImage = UIBarButtonItem(title: "Add image",
-                                       image: nil,
-                                       target: self,
-                                       action: #selector(addImageAction))
-        
-        let categoryButton = UIBarButtonItem(title: "Category",
-                                             image: nil,
-                                             target: self,
-                                             action: #selector(addCategoryAction))
-        
-        let spacing = UIBarButtonItem(systemItem: .flexibleSpace)
-        
-        setToolbarItems([trashButton, spacing, addImage, spacing, categoryButton], animated: true)
-        
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save,
-                                                            target: self,
-                                                            action: #selector(saveAction))
+    private func handleCategorySelection(_ cat: Category) {
+        //print("Selected category: \(category)")
+        category = cat
+
+        if let categoryButton = toolbarItems?.first(where: { $0.menu != nil }) {
+            categoryButton.title = cat.getStringCategory
+        }
+        checkChangesNote()
     }
     
+    fileprivate func checkChangesNote() {
+        let textChanged = textView.text != viewModel?.text
+        let categoryChanged = category != viewModel?.noteCategory
+        hasChanges = (textChanged || categoryChanged) && (textView.text != "")
+    }
     
+}
+
+//MARK: - UITextViewDelegate
+extension NoteViewController: UITextViewDelegate {
+    func textViewDidChange(_ textView: UITextView) {
+        checkChangesNote()
+    }
 }
