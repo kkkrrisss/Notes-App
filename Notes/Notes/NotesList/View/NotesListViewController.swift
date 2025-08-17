@@ -55,6 +55,7 @@ class NotesListViewController: UITableViewController {
         let noteVC = NoteViewController()
         let viewModel = NoteViewModel(note: nil)
         noteVC.viewModel = viewModel
+        noteVC.isNewNote = true
         navigationController?.pushViewController(noteVC, animated: true)
     }
     
@@ -114,6 +115,7 @@ extension NotesListViewController {
         let noteVC = NoteViewController()
         let viewModel = NoteViewModel(note: note)
         noteVC.viewModel = viewModel
+        noteVC.isNewNote = false
         navigationController?.pushViewController(noteVC, animated: true)
     }
 }

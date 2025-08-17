@@ -7,7 +7,7 @@
 
 import UIKit
 
-enum Category: Int {
+enum Category: Int, CaseIterable {
     case personal = 0
     case work = 1
     case study = 2
@@ -26,6 +26,21 @@ enum Category: Int {
             return .lightPink
         case .lists:
             return .lightGreen
+        }
+    }
+    
+    var getStringCategory: String {
+        switch self {
+        case .personal:
+            return "Personal"
+        case .work:
+            return "Work"
+        case .study:
+            return "Study"
+        case .hobby:
+            return "Hobby"
+        case .lists:
+            return "Lists"
         }
     }
 }

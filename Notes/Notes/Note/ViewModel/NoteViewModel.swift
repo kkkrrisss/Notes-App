@@ -17,10 +17,12 @@ protocol NoteViewModelProtocol {
 
 final class NoteViewModel: NoteViewModelProtocol {
     let note: Note?
+    
     var text: String {
         let text = (note?.title ?? "") + "\n\n" + (note?.description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
     var noteCategory: Category {
         return note?.category ?? .personal
     }
@@ -46,7 +48,7 @@ final class NoteViewModel: NoteViewModelProtocol {
         guard let note = note else { return }
         NotePersistent.delete(note)
     }
-    
+ 
     //MARK: - Private methods
     private func createTitleAndDescription(from text: String) -> (String, String?) {
         var description = text

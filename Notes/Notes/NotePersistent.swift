@@ -89,4 +89,6 @@ final class NotePersistent: NSManagedObject {
             debugPrint("Save note error: \(error)")
         }
     }
+    
+    
 }

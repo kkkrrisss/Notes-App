@@ -27,6 +27,14 @@ final class SimpleNoteTableViewCell: UITableViewCell {
         return label
     }()
     
+    private let categoryLabel: UILabel = {
+        let label = UILabel()
+        
+        label.text = "Category"
+        label.font = .systemFont(ofSize: 12)
+        
+        return label
+    }()
     //MARK: - Initializations
     override init(style: UITableViewCell.CellStyle,
                   reuseIdentifier: String?) {
@@ -42,6 +50,7 @@ final class SimpleNoteTableViewCell: UITableViewCell {
     //MARK: - Methods
     func set(note: Note) {
         titleLabel.text = note.title
+        categoryLabel.text = note.category.getStringCategory
         containerView.backgroundColor = note.category.colorCategory
     }
     
@@ -49,6 +58,7 @@ final class SimpleNoteTableViewCell: UITableViewCell {
     private func setupUI() {
         addSubview(containerView)
         containerView.addSubview(titleLabel)
+        containerView.addSubview(categoryLabel)
         
         setupConstraints()
     }
@@ -59,7 +69,12 @@ final class SimpleNoteTableViewCell: UITableViewCell {
         }
         
         titleLabel.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(10)
+            make.leading.trailing.top.equalToSuperview().inset(10)
+        }
+        
+        categoryLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(5)
+            make.leading.trailing.bottom.equalToSuperview().inset(10)
         }
     }
 }

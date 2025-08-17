@@ -38,6 +38,15 @@ final class ImageNoteTableViewCell: UITableViewCell {
         return view
     }()
     
+    private let categoryLabel: UILabel = {
+        let label = UILabel()
+        
+        label.text = "Category"
+        label.font = .systemFont(ofSize: 12)
+        
+        return label
+    }()
+    
     //MARK: - Initializations
     override init(style: UITableViewCell.CellStyle,
                   reuseIdentifier: String?) {
@@ -54,6 +63,7 @@ final class ImageNoteTableViewCell: UITableViewCell {
     func set(note: Note) {
         titleLabel.text = note.title
         containerView.backgroundColor = note.category.colorCategory
+        categoryLabel.text = note.category.getStringCategory
         guard let imageData = note.image,
               let image =  UIImage(data: imageData) else { return }
         attachmentView.image = image
@@ -64,6 +74,7 @@ final class ImageNoteTableViewCell: UITableViewCell {
         addSubview(containerView)
         containerView.addSubview(attachmentView)
         containerView.addSubview(titleLabel)
+        containerView.addSubview(categoryLabel)
         
         setupConstraints()
     }
@@ -79,6 +90,10 @@ final class ImageNoteTableViewCell: UITableViewCell {
         }
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(attachmentView.snp.bottom).offset(10)
+            make.leading.trailing.equalToSuperview().inset(10)
+        }
+        categoryLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(5)
             make.leading.trailing.bottom.equalToSuperview().inset(10)
         }
     }
