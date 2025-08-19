@@ -9,37 +9,42 @@ import Foundation
 
 protocol NoteViewModelProtocol {
     var text: String { get }
-    var noteCategory: Category { get }
+    var noteCategory: Category { get set }
+    var isNewNote: Bool { get }
     
-    func save(text: String, category: Category)
+    func save(text: String, category: Category?)
     func delete()
+    func hasChanged(text: String) -> Bool
 }
 
 final class NoteViewModel: NoteViewModelProtocol {
     let note: Note?
     
+    var noteCategory: Category
+    var oldNoteCategory: Category
+    var isNewNote: Bool
+    
     var text: String {
         let text = (note?.title ?? "") + "\n\n" + (note?.description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
-    var noteCategory: Category {
-        return note?.category ?? .personal
-    }
-    
-    init(note: Note?) {
+        
+    init(note: Note?, isNewNote: Bool = false) {
         self.note = note
+        self.noteCategory = note?.category ?? .personal
+        self.oldNoteCategory = noteCategory
+        self.isNewNote = isNewNote
     }
     
     //MARK: - Methods
     
-    func save(text: String, category: Category) {
+    func save(text: String, category: Category?) {
         let date = note?.date ?? Date()
         let (title, description) = createTitleAndDescription(from: text)
         let note = Note(title: title,
                         description: description,
                         date: date,
-                        category: category,
+                        category: category ?? .personal,
                         imageURL: nil )
         NotePersistent.save(note)
     }
@@ -48,7 +53,12 @@ final class NoteViewModel: NoteViewModelProtocol {
         guard let note = note else { return }
         NotePersistent.delete(note)
     }
- 
+    
+    func hasChanged(text: String) -> Bool {
+        let textChanged = self.text != text
+        let categoryChanged = noteCategory != oldNoteCategory
+        return (textChanged || categoryChanged) && (text != "")
+    }
     //MARK: - Private methods
     private func createTitleAndDescription(from text: String) -> (String, String?) {
         var description = text

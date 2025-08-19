@@ -31,24 +31,14 @@ final class NoteViewController: UIViewController {
     
     //MARK: - Properties
     var viewModel: NoteViewModelProtocol?
-    var isNewNote: Bool = true
-    private var category: Category = .personal {
-        didSet {
-            view.backgroundColor = category.colorCategory
-        }
-    }
-    
-    private var hasChanges = false {
-        didSet {
-            navigationItem.rightBarButtonItem?.isEnabled = hasChanges
-        }
-    }
+
     //MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        textView.delegate = self
+        setDelegate()
         configure()
+        setupRecognizer()
         setupUI()
     }
 
@@ -61,7 +51,7 @@ final class NoteViewController: UIViewController {
     //MARK: - Action
     @objc
     private func saveAction() {
-        viewModel?.save(text: textView.text, category: category)
+        viewModel?.save(text: textView.text, category: viewModel?.noteCategory)
         navigationController?.popViewController(animated: true)
     }
     
@@ -86,7 +76,6 @@ final class NoteViewController: UIViewController {
     private func configure() {
         textView.text = viewModel?.text
         view.backgroundColor = viewModel?.noteCategory.colorCategory
-        category = viewModel?.noteCategory ?? .personal
         
 //        guard let imageData = note.image,
 //              let image = UIImage(data: imageData) else { return }
@@ -105,10 +94,6 @@ final class NoteViewController: UIViewController {
             )
         navigationItem.rightBarButtonItem?.isEnabled = false
         
-        //Keyboard
-        let recognizer = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
-        view.addGestureRecognizer(recognizer)
-        
         if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             setupTextView()
         }
@@ -116,6 +101,15 @@ final class NoteViewController: UIViewController {
         setupConstraints()
         setImageHeight()
         setupBars()
+    }
+    
+    private func setDelegate() {
+        textView.delegate = self
+    }
+    
+    private func setupRecognizer() {
+        let recognizer = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        view.addGestureRecognizer(recognizer)
     }
     
     private func setupConstraints() {
@@ -159,7 +153,7 @@ final class NoteViewController: UIViewController {
 
         let spacing = UIBarButtonItem(systemItem: .flexibleSpace)
         
-        if isNewNote {
+        if ((viewModel?.isNewNote) != nil) {
             setToolbarItems([spacing, spacing, addImage, spacing, categoryButton], animated: true)
             
         } else {
@@ -187,8 +181,9 @@ final class NoteViewController: UIViewController {
 
     private func handleCategorySelection(_ cat: Category) {
         //print("Selected category: \(category)")
-        category = cat
-
+        viewModel?.noteCategory = cat
+        view.backgroundColor = viewModel?.noteCategory.colorCategory
+        
         if let categoryButton = toolbarItems?.first(where: { $0.menu != nil }) {
             categoryButton.title = cat.getStringCategory
         }
@@ -196,9 +191,8 @@ final class NoteViewController: UIViewController {
     }
     
     fileprivate func checkChangesNote() {
-        let textChanged = textView.text != viewModel?.text
-        let categoryChanged = category != viewModel?.noteCategory
-        hasChanges = (textChanged || categoryChanged) && (textView.text != "")
+    
+        navigationItem.rightBarButtonItem?.isEnabled = viewModel?.hasChanged(text: textView.text) ?? false
     }
     
 }
