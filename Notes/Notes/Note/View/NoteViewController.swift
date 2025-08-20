@@ -31,14 +31,16 @@ final class NoteViewController: UIViewController {
     
     //MARK: - Properties
     var viewModel: NoteViewModelProtocol?
-
+    private let imageHeight: CGFloat = 200
+    private var imageName: String?
+    
     //MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setDelegate()
         configure()
-        setupRecognizer()
+        setupGusture()
         setupUI()
     }
 
@@ -51,7 +53,9 @@ final class NoteViewController: UIViewController {
     //MARK: - Action
     @objc
     private func saveAction() {
-        viewModel?.save(text: textView.text, category: viewModel?.noteCategory)
+        viewModel?.save(text: textView.text,
+                        image: attachmentView.image,
+                        imageName: imageName)
         navigationController?.popViewController(animated: true)
     }
     
@@ -63,12 +67,13 @@ final class NoteViewController: UIViewController {
     
     @objc
     private func addImageAction() {
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .photoLibrary
         
+        present(imagePicker, animated: true)
     }
-    
-    @objc func addCategoryAction() {
-        
-    }
+
     
     //MARK: - Private Methods
     
@@ -76,10 +81,7 @@ final class NoteViewController: UIViewController {
     private func configure() {
         textView.text = viewModel?.text
         view.backgroundColor = viewModel?.noteCategory.colorCategory
-        
-//        guard let imageData = note.image,
-//              let image = UIImage(data: imageData) else { return }
-//        attachmentView.image = image
+        attachmentView.image = viewModel?.image
     }
     
     private func setupUI() {
@@ -99,7 +101,6 @@ final class NoteViewController: UIViewController {
         }
         
         setupConstraints()
-        setImageHeight()
         setupBars()
     }
     
@@ -107,15 +108,17 @@ final class NoteViewController: UIViewController {
         textView.delegate = self
     }
     
-    private func setupRecognizer() {
+    private func setupGusture() {
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
         view.addGestureRecognizer(recognizer)
     }
     
     private func setupConstraints() {
         attachmentView.snp.makeConstraints { make in
+            let height = attachmentView.image != nil ? imageHeight : 0
             make.top.equalTo(view.safeAreaLayoutGuide)
-            make.leading.trailing.equalToSuperview().inset(10)
+            make.trailing.leading.equalToSuperview().inset(10)
+            make.height.equalTo(height)
         }
         
         textView.snp.makeConstraints { make in
@@ -125,10 +128,9 @@ final class NoteViewController: UIViewController {
         }
     }
     
-    private func setImageHeight() {
-        let height = attachmentView.image != nil ? 200 : 0
-        attachmentView.snp.makeConstraints { make in
-            make.height.equalTo(height)
+    private func updateImageHeight() {
+        attachmentView.snp.updateConstraints { make in
+            make.height.equalTo(imageHeight)
         }
     }
     
@@ -139,10 +141,9 @@ final class NoteViewController: UIViewController {
     }
 
     private func setupBars() {
-        let addImage = UIBarButtonItem(title: "Add image",
-                                       image: nil,
-                                       target: self,
-                                       action: #selector(addImageAction))
+        let imageButton = UIBarButtonItem(barButtonSystemItem: .camera,
+                                          target: self,
+                                          action: #selector(addImageAction))
 
         let categoryButton = UIBarButtonItem(
             title: viewModel?.noteCategory.getStringCategory,
@@ -153,14 +154,15 @@ final class NoteViewController: UIViewController {
 
         let spacing = UIBarButtonItem(systemItem: .flexibleSpace)
         
-        if ((viewModel?.isNewNote) != nil) {
-            setToolbarItems([spacing, spacing, addImage, spacing, categoryButton], animated: true)
+        guard let isNewNote = viewModel?.isNewNote else { return }
+        if isNewNote {
+            setToolbarItems([spacing, spacing, imageButton, spacing, categoryButton], animated: true)
             
         } else {
             let trashButton = UIBarButtonItem(barButtonSystemItem: .trash,
                                               target: self,
                                               action: #selector(deleteAction))
-            setToolbarItems([trashButton, spacing, addImage, spacing, categoryButton], animated: true)
+            setToolbarItems([trashButton, spacing, imageButton, spacing, categoryButton], animated: true)
         }
     }
     
@@ -192,7 +194,7 @@ final class NoteViewController: UIViewController {
     
     fileprivate func checkChangesNote() {
     
-        navigationItem.rightBarButtonItem?.isEnabled = viewModel?.hasChanged(text: textView.text) ?? false
+        navigationItem.rightBarButtonItem?.isEnabled = viewModel?.hasChanged(text: textView.text, imageName: imageName) ?? false
     }
     
 }
@@ -201,5 +203,24 @@ final class NoteViewController: UIViewController {
 extension NoteViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         checkChangesNote()
+    }
+}
+
+//MARK: - UIImagePickerControllerDelegate
+extension NoteViewController: UIImagePickerControllerDelegate & UINavigationControllerDelegate {
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        guard let selectedImage = info[.originalImage] as? UIImage,
+              let url = info[.imageURL] as? URL else { return }
+        
+        imageName = url.lastPathComponent
+        attachmentView.image = selectedImage
+        checkChangesNote()
+        updateImageHeight()
+        dismiss(animated: true)
     }
 }
