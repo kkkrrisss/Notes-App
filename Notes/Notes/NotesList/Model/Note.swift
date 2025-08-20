@@ -13,6 +13,4 @@ struct Note: TableViewItemProtocol {
     let date: Date
     let category: Category
     let imageURL: URL?
-    let image: Data? = nil
-  
 }
