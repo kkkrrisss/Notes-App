@@ -8,8 +8,8 @@
 
 ## Features
 - Create, view, and store notes  
-- Navigation via `UINavigationController`  
+- Navigation `UINavigationController`  
 - Data storage using `CoreData`  
 - Image storage using `FileManager`  
-- Simple **MVVM** architecture
+- **MVVM** architecture
 - Assign a category to each note, with a unique color displayed on the main screen cell and the note detail screen  
